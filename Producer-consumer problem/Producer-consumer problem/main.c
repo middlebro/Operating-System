@@ -24,6 +24,11 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 sem_t empty;
 sem_t full;
 
+// seed //
+unsigned int seed;
+unsigned int total_thread_num;
+
+
 struct multi_arg {
     int threadNum;
     int duration;
@@ -76,8 +81,7 @@ void *producer(void *param){
     buffer_item item;
     
     while(1) {
-        sleep(duration/10 + duration % 10);
-        //        sem_wait(&empty);
+        // sleep(rand_r(&seed) % duration + 1);
         sem_wait(&empty);
         pthread_mutex_lock(&mutex);
         
@@ -94,6 +98,7 @@ void *producer(void *param){
         //        sem_post(&full);
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
+        sleep(duration%total_thread_num);
     }
     return NULL;
 }
@@ -106,7 +111,6 @@ void *consumer(void *param){
     buffer_item item;
     
     while(1) {
-        sleep(duration/10 + duration % 10);
         sem_wait(&full);
         pthread_mutex_lock(&mutex);
         // critical section
@@ -124,8 +128,7 @@ void *consumer(void *param){
         // sleep(duration);
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
-        //        sem_post(&empty);
-        
+        sleep(duration%total_thread_num + 1);
         // consume the removed item
         
     }
@@ -143,7 +146,8 @@ int main(int argc, char *argv[]) {
     
     // your code
     srand((unsigned int)time(NULL));
-    
+    seed = (unsigned int)time(NULL);
+    total_thread_num = number_of_producers + number_of_consumers;
     // initialize semaphores
     sem_init(&empty, 0, BUFFER_SIZE);
     sem_init(&full, 0, 0);
