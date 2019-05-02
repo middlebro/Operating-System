@@ -24,93 +24,87 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 sem_t empty;
 sem_t full;
 
-// seed //
-unsigned int seed;
+// ** Count of total threads ** //
 unsigned int total_thread_num;
 
-
+// ** Multiple Argument ** //
 struct multi_arg {
-    int threadNum;
+    int threadID;
     int duration;
 };
 
 int produce_item(void){
-    // your code
+    // produce randomly item
     return rand() % 10000000000;
 }
 
 int add_item(buffer_item item){
-    // your code
+    // test buuffer is available
     if(buffer[in] != '\0'){
         // buffer is already full
         return -1;
     }
     else {
-        buffer[in] = item;
-        in = (in + 1) % 10;
-        printf("%s %d\n\n", "produced", item);
+        buffer[in] = item;  // add item to buffer
+        in = (in + 1) % 10; // accomodate buffer pointer
+        printf("%s %d\n\n", "produced", item);  // show produced item
         return 0;
     }
 }
 
 int remove_item(buffer_item *item){
-    // your code
+    // test buffer is available
     if (buffer[out] == '\0'){
         //buffer is empty
         return -1;
     }
     else {
-        int tmp_item = item[out];
-        item[out] = '\0';
-        out = (out + 1) % 10;
+        int tmp_item = item[out];   // store item in temporary storage for return
+        item[out] = '\0';           // remove item from buffer
+        out = (out + 1) % 10;       // accomodate buffer pointer
         return tmp_item;
     }
 }
 
 int consume_item(buffer_item item){
-    // your code
-    
+    // show consumed item
     return !printf("%s %d\n\n", "consumed", item);
 }
 
 void *producer(void *param){
-    // your code
+    // cast parameter to struct Multiple Argument
     struct multi_arg *arg = (struct multi_arg*)param;
-    int id = arg->threadNum;
+    int id = arg->threadID;
     int duration = arg->duration;
     buffer_item item;
-    
     while(1) {
-        // sleep(rand_r(&seed) % duration + 1);
-        sem_wait(&empty);
-        pthread_mutex_lock(&mutex);
-        
-        // critical section
-        // add the item to the buffer
-        item = produce_item();
-        printf("P%d          ", id);
-        if (add_item(item) == -1) {
+        ////////// ** Entry Section ** ////////////////////////////////////////////////////////////////
+        sem_wait(&empty);               // empty - 1 and test can be into Critical Section?
+        pthread_mutex_lock(&mutex);     // SET Mutex lock to enter Critical Section.
+        ////////// ** Critical Section ** /////////////////////////////////////////////////////////////
+        item = produce_item();          // produce item
+        printf("P%d          ", id);    // show Producer id
+        if (add_item(item) == -1) {     // test add item into buffer
             // buffer is already full
             printf("%s\n", "buffer is already full!\n");
         }
-        
-        // sleep(duration);
-        //        sem_post(&full);
-        pthread_mutex_unlock(&mutex);
-        sem_post(&full);
-        sleep(duration%total_thread_num);
+        ////////// ** Exit Section ** /////////////////////////////////////////////////////////////////
+        pthread_mutex_unlock(&mutex);   // SET Mutex unlock to enter another thread.
+        sem_post(&full);                // full + 1 and wakeup thread.
+        sleep(duration%total_thread_num); // Sleep for a designated time.
+        ///////////////////////////////////////////////////////////////////////////////////////////////
     }
     return NULL;
 }
 
 void *consumer(void *param){
-    // your code
+    // cast parameter to struct Multiple Argument
     struct multi_arg *arg = (struct multi_arg*)param;
-    int id = arg->threadNum;
+    int id = arg->threadID;
     int duration = arg->duration;
     buffer_item item;
-    
     while(1) {
+        
         sem_wait(&full);
         pthread_mutex_lock(&mutex);
         // critical section
@@ -145,31 +139,32 @@ int main(int argc, char *argv[]) {
     number_of_consumers = atoi(argv[3]);
     
     // your code
+    // set seed value
     srand((unsigned int)time(NULL));
-    seed = (unsigned int)time(NULL);
+    
+    // initialize total_thread_num
     total_thread_num = number_of_producers + number_of_consumers;
     // initialize semaphores
     sem_init(&empty, 0, BUFFER_SIZE);
     sem_init(&full, 0, 0);
     pthread_mutex_init(&mutex, NULL);
     
+    // initialize BUFFER
     for (int i = 0; i < BUFFER_SIZE; ++i) {
         buffer[i] = '\0';
     }
-    // end initialize
-    
     
     // set multiple arguments for theads
     struct multi_arg *producer_args, *consumer_args;
     producer_args = (struct multi_arg *)malloc(sizeof(struct multi_arg) * number_of_producers);
     consumer_args = (struct multi_arg *)malloc(sizeof(struct multi_arg) * number_of_consumers);
-    for (int i = 0; i < number_of_producers; ++i) {
+    for (int i = 0; i < number_of_producers; ++i) { // initialize argument
         producer_args[i].duration = duration;
-        producer_args[i].threadNum = i;
+        producer_args[i].threadID = i;
     }
     for (int i = 0; i < number_of_consumers; ++i) {
         consumer_args[i].duration = duration;
-        consumer_args[i].threadNum = i;
+        consumer_args[i].threadID = i;
     }
     
     // create a set number of Producers and Consumers
