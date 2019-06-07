@@ -14,9 +14,9 @@
 #define _max(x,y) ((x > y) ? x : y)
 using namespace std;
 
- /* Address translation
+/* Address translation
   
-    logical address -> physical address
+  logical address -> physical address
   
   logical address <page#, offset>
   1. TLB table 에 찾고자 하는 page#가 있는 지 확인
@@ -35,7 +35,13 @@ using namespace std;
   1.1.1.2 비어있는 공간에 pair upate
   1.2 return pair
   2. return pair->frame# + offset
-  */
+*/
+
+/* LRU pseudocode
+
+    1. 
+ 
+ */
 
 
 vector<int> dec_to_bin(int dec) {
