@@ -139,7 +139,9 @@ double EAT(const double &e, const double &a) {
 
 int main(int argc, const char * argv[]) {
     int page_table[256];
+    int frame_table[256];
     memset(page_table, -1, sizeof(page_table));
+    memset(frame_table, -1, sizeof(frame_table));
     // initialize page table
     ifstream logical_address_input("address.txt", ios::in);
     fstream physical_address_output("physical.txt", ios::out);
@@ -159,8 +161,11 @@ int main(int argc, const char * argv[]) {
                 offset[i] = binary[i + 8];
             }
             
-            if (page_table[bin_to_dec(page_number)] == -1)
-                page_table[bin_to_dec(page_number)] = frame_number++;
+            if (page_table[bin_to_dec(page_number)] == -1) {
+                page_table[bin_to_dec(page_number)] = frame_number;
+                frame_table[frame_number] = bin_to_dec(page_number);
+                ++frame_number;
+            }
             
             int physical_address = page_table[bin_to_dec(page_number)] * 256 + bin_to_dec(offset);
             physical_address_output << to_string(physical_address) << "\n";
@@ -169,12 +174,12 @@ int main(int argc, const char * argv[]) {
     
     // create frame_table.txt
     ofstream frame_table_output("frame_table.txt", ios::out);
-    // < frame#, flag, page# >
+    // < frame#, flag, page# > free : flag(0), allocated : flag(1)
     for (int i = 0; i < 256; ++i) {
-        if (page_table[i] == -1)
-            frame_table_output << to_string(page_table[i]) << " " << "0" << " " << to_string(i) << "\n";
+        if (frame_table[i] != -1)
+            frame_table_output << to_string(i) << " " << "1" << " " << to_string(frame_table[i]) << "\n";
         else
-            frame_table_output << to_string(page_table[i]) << " " << "1" << " " << to_string(i) << "\n";
+            frame_table_output << to_string(i) << " " << "0" << " " << to_string(frame_table[i]) << "\n";
     }
     
     // LRU
