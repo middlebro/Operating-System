@@ -14,6 +14,30 @@
 #define _max(x,y) ((x > y) ? x : y)
 using namespace std;
 
+ /* Address translation
+  
+    logical address -> physical address
+  
+  logical address <page#, offset>
+  1. TLB table 에 찾고자 하는 page#가 있는 지 확인
+  1.1 NOT EXIST
+  1.1.1 PAGE TABLE 에 찾고자 하는 page# 가 있는 지 확인 : 해당 pair를 TLB table에 update
+  1.1.1.1 NOT EXIST
+  1.1.1.1.1 PAGE TABLE -> IS FULL ?
+  1.1.1.1.1.1 LRU 를 통해 victim을 선택하여 frame 공간을 확보
+  1.1.1.1.2 비어있는 frame에 page# 할당
+  1.1.1.1.3 할당된 pair return
+  1.1.1.2 EXIST
+  1.1.1.2.1 해당 pair return
+  1.1.2 반환된 pair 를 TLB table 에 update
+  1.1.2.1 TLB TABLE -> IS FULL?
+  1.1.2.1.1 LRU 를 이용해서 victim 선택 후 TLB TABLE 공간 확보
+  1.1.1.2 비어있는 공간에 pair upate
+  1.2 return pair
+  2. return pair->frame# + offset
+  */
+
+
 vector<int> dec_to_bin(int dec) {
     vector<int> bin(16, 0);
     for (int i = 15; dec > 0; --i) {
@@ -191,6 +215,12 @@ int main(int argc, const char * argv[]) {
     
     return 0;
 }
+
+
+
+
+
+
 
 //class Node
 //{
